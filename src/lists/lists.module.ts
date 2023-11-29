@@ -6,8 +6,11 @@ import { ListModel } from './entities/list.model';
 import { HttpModule } from '@nestjs/axios';
 import { ListGatewaySequelize } from './gateways/list-sequelize.gateway';
 import { ListHttpGateway } from './gateways/list-http.gateway';
-import { CreateListInCrmListener } from './listeners/create-list-in-crm.listener';
+// import { CreateListInCrmListener } from './listeners/create-list-in-crm.listener';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { BullModule } from '@nestjs/bull';
+import { PublishListCreatedListener } from './listeners/publish-listener-created.listener';
+import { CreateListInCrmJob } from './jobs/create-list-in-crm.job';
 
 @Module({
   imports: [
@@ -15,13 +18,19 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
     HttpModule.register({
       baseURL: 'http://localhost:3005',
     }),
+    BullModule.registerQueue({
+      name: 'default',
+      defaultJobOptions: { attempts: 1 },
+    }),
   ],
   controllers: [ListsController],
   providers: [
     ListsService,
     ListGatewaySequelize,
     ListHttpGateway,
-    CreateListInCrmListener,
+    // CreateListInCrmListener,
+    PublishListCreatedListener,
+    CreateListInCrmJob,
     {
       provide: 'ListPersistenceGateway',
       useExisting: ListGatewaySequelize,
